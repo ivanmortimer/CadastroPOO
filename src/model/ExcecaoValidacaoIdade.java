@@ -5,13 +5,15 @@
 package model;
 
 import java.io.Serializable;
+import java.io.Serial;
 
 /**
  *
  * @author Ivan
  */
 public class ExcecaoValidacaoIdade extends Exception implements Serializable {
-    private static final long serialVersionUID = -2321426394855140977L;
+    @Serial
+    private static final long serialVersionUID = 4L;
     // Atributos
     String msg_erro;
 

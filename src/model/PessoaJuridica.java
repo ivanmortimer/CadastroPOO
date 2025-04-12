@@ -5,6 +5,7 @@
 package model;
 
 import java.io.Serializable;
+import java.io.Serial;
 import java.util.InputMismatchException;
 
 /**
@@ -12,6 +13,8 @@ import java.util.InputMismatchException;
  * @author Ivan
  */
 public class PessoaJuridica extends Pessoa implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 5L;
     // Atributo
     private String cnpj;
     
@@ -20,13 +23,13 @@ public class PessoaJuridica extends Pessoa implements Serializable {
         super();
         this.cnpj = "";
     }
-    public PessoaJuridica(String cnpj) throws ExcecaoValidacaoCNPJ {
-        super();
-        setCNPJ(cnpj);
-    }
-    public PessoaJuridica(String nome, String cnpj) throws ExcecaoValidacaoCNPJ {
+    public PessoaJuridica(String nome) throws ExcecaoValidacaoCNPJ {
         super(nome);
-        setCNPJ(cnpj);
+        this.cnpj = "";
+    }
+    public PessoaJuridica(String nome, int id) throws ExcecaoValidacaoCNPJ {
+        super(nome, id);
+        this.cnpj = "";
     }
     public PessoaJuridica(String nome, int id, String cnpj) throws ExcecaoValidacaoCNPJ {
         super(nome, id);
@@ -51,9 +54,9 @@ public class PessoaJuridica extends Pessoa implements Serializable {
     // Método 'exibir' para impressão dos dados de PessoaFisica
     @Override
     public void exibir() {
-        System.out.println("nome: " + this.getNome());
-        System.out.println("id: " + this.getId());
-        System.out.println("cpf: " + this.getCNPJ());
+        System.out.println("Id: " + this.getId());
+        System.out.println("Nome: " + this.getNome());
+        System.out.println("CNPJ: " + this.getCNPJ());
     }
     
     // Método 'validarCNPJ': recebe um argumento do tipo String e retorna
@@ -116,23 +119,4 @@ public class PessoaJuridica extends Pessoa implements Serializable {
             return false;
         }
     }
-}
-
-class ExcecaoValidacaoCNPJ extends Exception implements Serializable {
-	private static final long serialVersionUID = -7346301988841499439L;
-	// Atributes
-	String msg_erro;
-
-        // Construtores
-	public ExcecaoValidacaoCNPJ() {
-	}
-	public ExcecaoValidacaoCNPJ(String message) {
-		super(message);
-		this.msg_erro = message;
-	}
-	
-	@Override
-	public String toString() {
-		return "ErroValidacaoCNPJ: " + this.msg_erro;
-	}
 }

@@ -5,6 +5,7 @@
 package model;
 
 import java.io.Serializable;
+import java.io.Serial;
 import java.util.InputMismatchException;
 
 /**
@@ -12,6 +13,8 @@ import java.util.InputMismatchException;
  * @author Ivan
  */
 public class PessoaFisica extends Pessoa implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 2L;
     // Atributos
     private String cpf;
     private int idade;
@@ -20,22 +23,22 @@ public class PessoaFisica extends Pessoa implements Serializable {
     public PessoaFisica() {
         super();
         this.cpf = "";
-        this.idade = 0;
+        this.idade = -1;
     }
-    public PessoaFisica(String cpf) throws ExcecaoValidacaoCPF {
-        super();
-        setCPF(cpf);
-        this.idade = 0;
-    }
-    public PessoaFisica(String cpf, int idade) throws ExcecaoValidacaoCPF, ExcecaoValidacaoIdade {
-        super();
-        setCPF(cpf);
-        setIdade(idade);
-    }
-    public PessoaFisica(String nome, String cpf, int idade) throws ExcecaoValidacaoCPF, ExcecaoValidacaoIdade {
+    public PessoaFisica(String nome) throws ExcecaoValidacaoCPF {
         super(nome);
+        this.cpf = "";
+        this.idade = -1;
+    }
+    public PessoaFisica(String nome, int id) throws ExcecaoValidacaoCPF, ExcecaoValidacaoIdade {
+        super(nome, id);
+        this.cpf = "";
+        this.idade = -1;
+    }
+    public PessoaFisica(String nome, int id, String cpf) throws ExcecaoValidacaoCPF, ExcecaoValidacaoIdade {
+        super(nome, id);
         setCPF(cpf);
-        setIdade(idade);
+        this.idade = -1;
     }
     public PessoaFisica(String nome, int id, String cpf, int idade) throws ExcecaoValidacaoCPF, ExcecaoValidacaoIdade {
         super(nome, id);
@@ -68,10 +71,10 @@ public class PessoaFisica extends Pessoa implements Serializable {
     // Método 'exibir' para impressão dos dados de PessoaFisica
     @Override
     public void exibir() {
-        System.out.println("nome: " + this.getNome());
-        System.out.println("id: " + this.getId());
-        System.out.println("cpf: " + this.getCPF());
-        System.out.println("idade: " + this.getIdade());
+        System.out.println("Id: " + this.getId());
+        System.out.println("Nome: " + this.getNome());
+        System.out.println("CPF: " + this.getCPF());
+        System.out.println("Idade: " + this.getIdade());
     }
     
     // Método 'validarCPF': recebe uma String e retorna true se o CPF for válido.
@@ -134,7 +137,7 @@ public class PessoaFisica extends Pessoa implements Serializable {
     
     // Métodos 'equals' e 'hashcode' alterados para conformá-los ao padrão da classe:
     // que usa o atributo 'id' ao invéz de um 'hashcode' para individualizar os objetos
-    // do tipo 'Pessoa' e 'PessoaFisica'
+    // do tipo 'Pessoa' e 'PessoaFisica'.
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
@@ -146,6 +149,5 @@ public class PessoaFisica extends Pessoa implements Serializable {
     @Override
     public int hashCode() {
         return Integer.hashCode(this.getId());
-}
-
+    }
 }

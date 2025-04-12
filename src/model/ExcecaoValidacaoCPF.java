@@ -5,13 +5,15 @@
 package model;
 
 import java.io.Serializable;
+import java.io.Serial;
 
 /**
  *
  * @author Ivan
  */
 public class ExcecaoValidacaoCPF extends Exception implements Serializable {
-    private static final long serialVersionUID = -8745070459212389971L;
+    @Serial
+    private static final long serialVersionUID = 3L;
     String msg_erro;
 
     public ExcecaoValidacaoCPF() {
