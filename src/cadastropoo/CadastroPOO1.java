@@ -31,7 +31,7 @@ public class CadastroPOO1 {
             
             // Garantir a persistência dos dados do repositório gravando-os no arquivo "repo1.csv"
             try {
-                repo1.persistir("repo1.csv", true, false);
+                repo1.persistir("repo1", true, false);
             }
             catch (IOException e) {
                 System.out.println("IOException: " + e.getMessage());
@@ -48,14 +48,14 @@ public class CadastroPOO1 {
 
         // Recuperar dados do arquivo "repo1.csv" e adicioná-los ao repositório 'repo2'
         try {
-            repo2.recuperar("repo1.csv");
+            repo2.recuperar("repo1");
             System.out.println();
             for (PessoaFisica pessoa_fisica : repo2.obterTodos()) {
                 pessoa_fisica.exibir();
                 System.out.println();
             }
         }
-        catch (IOException e) {
+        catch (IOException | ClassNotFoundException e) {
             System.out.println("IOException: " + e.getMessage());
         }
         
@@ -74,7 +74,7 @@ public class CadastroPOO1 {
             
             // Garantir a persistência dos dados do repositório gravando-os no arquivo "repo1.csv"
             try {
-                repo3.persistir("repo3.csv", true, false);
+                repo3.persistir("repo3", true, false);
             }
             catch (IOException e) {
                 System.out.println("IOException: " + e.getMessage());
@@ -89,7 +89,7 @@ public class CadastroPOO1 {
 
         // Recuperar dados do arquivo "repo1.csv" e adicioná-los ao repositório 'repo2'
         try {
-            repo4.recuperar("repo3.csv");
+            repo4.recuperar("repo3");
             System.out.println();
             for (PessoaJuridica pessoa_juridica : repo4.obterTodos()) {
                 pessoa_juridica.exibir();
