@@ -96,7 +96,7 @@ public class CadastroPOO1 {
                 System.out.println();
             }
         }
-        catch (IOException e) {
+        catch (IOException | ClassNotFoundException e) {
             System.out.println("IOException: " + e.getMessage());
         }
     }

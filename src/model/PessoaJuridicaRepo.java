@@ -4,16 +4,19 @@
  */
 package model;
 
+import java.util.List;
+import java.util.ArrayList;
 import java.io.Serializable;
 import java.io.Serial;
-import java.util.ArrayList;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
-import java.io.BufferedReader;
-import java.io.FileReader;
+import java.io.FileInputStream;
+import java.io.ObjectInputStream;
+import java.io.OutputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectOutputStream;
 import java.io.IOException;
 import java.io.FileNotFoundException;
+import java.io.EOFException;
 
 /**
  *
@@ -61,105 +64,134 @@ public class PessoaJuridicaRepo implements Serializable {
         return this.pessoa_juridica_array;
     }
 
-    // Método para gravar os dados da lista em um arquivo CSV, caso ele ainda não exista ou possa ser sobrescrito ou acrescido ao final
-    public void persistir(String nomeArquivo, boolean sobrescrever, boolean append) throws IOException {
+    // Método para gravar os dados da lista em um arquivo binário via serialização de objetos,
+    // caso ele ainda não exista ou possa ser sobrescrito ou acrescido (appended) ao final
+    /**
+     * Persiste os objetos da lista em um arquivo binário usando serialização.
+     * @param prefixoArquivo Prefixo do nome do arquivo.
+     * @param sobrescrever Se true, sobrescreve o arquivo existente.
+     * @param append Se true, adiciona ao final do arquivo existente.
+     * @return true se bem-sucedido, false se ocorrer IOException.
+     * @throws IOException Se houver erro de escrita ou conflito de opções.
+     * @throws IllegalStateException Se a lista estiver nula.
+     */
+    public boolean persistir(String prefixoArquivo, boolean sobrescrever, boolean append)
+            throws IOException, IllegalStateException {
+
+        // Verifica se o array está inicializado
+        if (pessoa_juridica_array == null) {
+            throw new IllegalStateException("O array de pessoas físicas está nulo.");
+        }
+
+        // Verifica se o prefixo é válido
+        if (prefixoArquivo == null || prefixoArquivo.trim().isEmpty()) {
+            throw new IllegalArgumentException("O prefixo do nome do arquivo não pode ser nulo ou vazio.");
+        }
+
+        // Cria o nome do arquivo com extensão padronizada
+        String nomeArquivo = prefixoArquivo + ".juridica.bin";
         File arquivo = new File(nomeArquivo);
 
         // Verifica se o arquivo já existe
         if (arquivo.exists()) {
-            // Verifica se o arquivo ser sobrescrito ou acrescido ao final, caso contrário lança uma exceção
             if (!sobrescrever && !append) {
-                throw new IOException("O arquivo '" + nomeArquivo + "' já existe e os argumentos 'sobrescrever' e 'append' possuem o valor 'false'.");
+                throw new IOException("O arquivo '" + nomeArquivo +
+                        "' já existe e os argumentos 'sobrescrever' e 'append' possuem o valor 'false'.");
             }
-            // Caso sobrescrever seja true e append false, simplesmente continua com escrita sem append (isto é, sobrescrevendo o arquivo)
         }
 
-        // Variável que guarda o valor booleano da verificação das condições para a escrita do cabeçalho
-        boolean escreverCabecalho = !arquivo.exists() || (sobrescrever && !append);
+        // Realiza a escrita dos objetos no arquivo
+        try (FileOutputStream fos = new FileOutputStream(arquivo, append);
+             ObjectOutputStream oos = append && arquivo.exists()
+                     ? new AppendableObjectOutputStream(fos)
+                     : new ObjectOutputStream(fos)) {
 
-        // Tenta dar início ao processo de escrita no arquivo
-        try (BufferedWriter escritor = new BufferedWriter(new FileWriter(arquivo, append))) {
-            // Escreve a primeira linha com os nomes dos atributos (cabeçalho), mas apenas se as condições
-            // anteriormente estipuladas forem atendidas
-            if (escreverCabecalho) {
-                escritor.write("id,nome,cnpj");
-                escritor.newLine();
+            for (PessoaJuridica pessoa : pessoa_juridica_array) {
+                oos.writeObject(pessoa);
             }
 
-            // Escreve cada objeto da lista como uma linha CSV
-            for (PessoaJuridica pf : pessoa_juridica_array) {
-                String linha = String.format("%d,%s,%s",
-                    pf.getId(),
-                    pf.getNome(),
-                    pf.getCNPJ()
-                );
-                escritor.write(linha);
-                escritor.newLine();
-            }
-            // Exibe mensagem informando que os dados foram armazenados com sucesso no arquivo especificado
-            System.out.println("Dados do objeto da classe 'PessoaJuridica' armazenados no arquivo: " + arquivo.getName());
+            // Mensagem de sucesso
+            System.out.println("Dados do objeto da classe 'PessoaJuridica' armazenados no arquivo: " + nomeArquivo);
+            return true;
+
+        } catch (IOException e) {
+            // Mensagem de erro padrão
+            System.err.println("Erro ao persistir dados no arquivo binário: " + e.getMessage());
+            return false;
         }
     }
 
-    // Método para ler os dados de um arquivo CSV (se ele existir) e preencher a lista
-    public void recuperar(String nomeArquivo) throws IOException {
+    // Método para ler os dados de um arquivo binário (se ele existir),
+    // via deserialização de objetos, e preencher a lista
+    /**
+     * Recupera objetos serializados de um arquivo binário e armazena-os na lista.
+     * @param prefixoArquivo Prefixo do nome do arquivo.
+     * @return true se a recuperação for bem-sucedida.
+     * @throws IOException Se houver erro de leitura.
+     * @throws ClassNotFoundException Se a classe dos objetos não for encontrada.
+     */
+    @SuppressWarnings("unchecked")
+    public boolean recuperar(String prefixoArquivo) throws IOException, ClassNotFoundException {
+        // Verifica se o prefixo é válido
+        if (prefixoArquivo == null || prefixoArquivo.trim().isEmpty()) {
+            throw new IllegalArgumentException("O prefixo do nome do arquivo não pode ser nulo ou vazio.");
+        }
+
+        // Define o nome do arquivo com base no prefixo
+        String nomeArquivo = prefixoArquivo + ".juridica.bin";
         File arquivo = new File(nomeArquivo);
 
-        // Verifica se o arquivo existe. Caso contrário, lança uma exceção.
+        // Verifica se o arquivo existe
         if (!arquivo.exists()) {
             throw new FileNotFoundException("O arquivo '" + nomeArquivo + "' não foi encontrado.");
         }
 
-        // Tenta dar início ao processo de leitura do arquivo
-        try (BufferedReader leitor = new BufferedReader(new FileReader(arquivo))) {
-            // Lê e valida o cabeçalho
-            String linhaCabecalho = leitor.readLine();
-            if (linhaCabecalho == null) {
-                throw new IOException("Cabeçalho ausente no arquivo.");
-            }
+        // Lista temporária para armazenar os objetos recuperados
+        List<PessoaJuridica> listaRecuperada = new ArrayList<>();
 
-            String[] cabecalhos = linhaCabecalho.trim().toLowerCase().split(",");
-            // Verifica o vetor de strings contendo os nomes dos atributos no cabeçalho possui exatamente 3 elementos
-            if (cabecalhos.length != 3) {
-                throw new IOException("Cabeçalho incompleto. Esperado: id,nome,cnpj");
-            }
-
-            if (!cabecalhos[0].equals("id") || !cabecalhos[1].equals("nome") ||
-                !cabecalhos[2].equals("cnpj")) {
-                throw new IOException("Cabeçalho inválido. Esperado exatamente: id,nome,cnpj");
-            }
-
-            // Limpa a lista antes de repopular (i.e., de preenchê-la novamente)
-            pessoa_juridica_array.clear();
-
-            String linha;
-            while ((linha = leitor.readLine()) != null) {
-                if (linha.trim().isEmpty()) continue; // Ignora linhas em branco
-
-                String[] partes = linha.split(",");
-                // Verifica se cada vetor de strings contendo os valores dos atributos de cada
-                // objeto da classe 'PessoaJuridica' contido em cada linha do arquivo
-                // possui exatamente 3 elementos:
-                if (partes.length != 3) {
-                    System.err.println("Linha inválida (esperado 3 campos): " + linha);
-                    continue;
-                }
-
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(arquivo))) {
+            while (true) {
                 try {
-                    int id = Integer.parseInt(partes[0].trim());
-                    String nome = partes[1].trim();
-                    String cnpj = partes[2].trim();
-
-                    // Usa o construtor completo de PessoaJuridica
-                    PessoaJuridica pf = new PessoaJuridica(nome, id, cnpj);
-                    pessoa_juridica_array.add(pf);
-                } catch (NumberFormatException | ExcecaoValidacaoCNPJ e) {
-                    System.err.println("Erro ao processar linha: '" + linha + "'. Motivo: " + e.getMessage());
+                    // Lê um objeto do arquivo e o adiciona à lista
+                    Object obj = ois.readObject();
+                    if (obj instanceof PessoaJuridica pessoa_juridica) {
+                        listaRecuperada.add(pessoa_juridica);
+                    } else {
+                        throw new ClassCastException("Objeto lido não é do tipo PessoaJuridica.");
+                    }
+                } catch (EOFException eof) {
+                    // Fim do arquivo atingido, sai do loop
+                    break;
                 }
             }
-            // Exibe mensagem informando que os dados foram recuperados com sucesso do arquivo especificado
-            System.out.println("Dados do objeto da classe 'PessoaJuridica' recuperados do arquivo: " + arquivo.getName());
+        } catch (IOException | ClassNotFoundException e) {
+            // Mensagem de erro padrão
+            System.err.println("Erro ao recuperar dados do arquivo binário: " + e.getMessage());
+            throw e;
         }
+
+        // Atribui a lista recuperada ao atributo da classe (com cast explícito)
+        pessoa_juridica_array = (ArrayList<PessoaJuridica>) listaRecuperada;
+
+        // Mensagem de sucesso
+        System.out.println("Dados da classe 'PessoaJuridica' recuperados com sucesso do arquivo: " + nomeArquivo);
+        return true;
+    }
+}
+
+/**
+ * Classe auxiliar que permite acrescentar objetos a um arquivo binário
+ * sem reescrever o cabeçalho do stream.
+ */
+class AppendableObjectOutputStream extends ObjectOutputStream {
+    public AppendableObjectOutputStream(OutputStream out) throws IOException {
+        super(out);
+    }
+
+    @Serial
+    @Override
+    protected void writeStreamHeader() throws IOException {
+        // Não escreve o cabeçalho novamente ao usar append
     }
 }
 
